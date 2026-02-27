@@ -39,8 +39,34 @@ function fillPage(data) {
   inputs.forEach(input => {
     if (input.disabled || input.readOnly || input.value) return; // Skip if already filled
 
-    // 3. Gather Context: Read the text surrounding the input just like a human would
-    const parentText = (input.closest('div[class], label, fieldset, tr') || input.parentElement).innerText || "";
+    // 3. Gather Context: Aggressively hunt for detached labels (The Workday Fix)
+    let parentText = "";
+
+    // Strategy A: Look for a strictly linked HTML label (Workday loves this)
+    if (input.id) {
+      const linkedLabel = document.querySelector(`label[for="${input.id}"]`);
+      if (linkedLabel) parentText += linkedLabel.innerText + " ";
+    }
+
+    // Strategy B: Look for an ARIA labelledby reference
+    const ariaLabelledBy = input.getAttribute('aria-labelledby');
+    if (ariaLabelledBy) {
+      // Some sites put multiple IDs in aria-labelledby, so we split them
+      ariaLabelledBy.split(' ').forEach(id => {
+        const linkedAria = document.getElementById(id);
+        if (linkedAria) parentText += linkedAria.innerText + " ";
+      });
+    }
+
+    // Strategy C: Walk up the DOM tree a few levels to catch sibling labels
+    if (!parentText.trim()) {
+      let currentEl = input.parentElement;
+      for (let i = 0; i < 3 && currentEl; i++) {
+        parentText += currentEl.innerText + " ";
+        currentEl = currentEl.parentElement;
+      }
+    }
+
     const idContext = input.id || "";
     const nameContext = input.name || "";
     const placeholderContext = input.getAttribute('placeholder') || "";
