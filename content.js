@@ -14,35 +14,52 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 function fillPage(data) {
   let filled = 0;
 
-  // 1. Map robust regex patterns to your saved data
+  // 1. Map robust regex patterns to your saved data (STRICTER PRIORITIES)
   const matchers = [
+    // 👤 Names
     { regex: /first\s*name|given\s*name/i, val: data.firstName },
-    { regex: /last\s*name|surname|family\s*name/i, val: data.lastName },
+    { regex: /last\s*name|surname|family\s*name|local\s*family\s*name/i, val: data.lastName },
     { regex: /full\s*name|applicant\s*name/i, val: data.fullName },
+
+    // 📞 Contact
     { regex: /e-?mail/i, val: data.email },
     { regex: /phone|mobile|contact\s*number/i, val: data.phone },
+
+    // 💼 Professional (Highly Specific Fields First)
     { regex: /current\s*ctc|current\s*salary|current\s*compensation/i, val: data.currentCTC },
     { regex: /expected\s*ctc|expected\s*salary|expected\s*compensation/i, val: data.expectedCTC },
     { regex: /notice\s*period|joining\s*time/i, val: data.noticePeriod },
-    { regex: /experience|yoe/i, val: data.experience },
-    { regex: /current\s*location|city/i, val: data.city },
+
+    // Catch "Role Description" BEFORE the generic "Role" catcher grabs it
+    { regex: /role\s*description|responsibilities|summary|bio/i, val: data.summary },
+    { regex: /job\s*title|title|position|role/i, val: data.jobTitle },
+    { regex: /company|employer|organization/i, val: data.company },
+
+    // FIXED: Changed loose "experience" to strict "years of experience" to ignore the Workday section header
+    { regex: /years\s*of\s*experience|total\s*experience|yoe/i, val: data.experience },
+    { regex: /linkedin/i, val: data.linkedin },
+
+    // 📍 Address & Locations
+    { regex: /postal\s*code|zip\s*code|pincode|pin\s*code/i, val: data.zip },
+    { regex: /city|location/i, val: data.city }, // Fixed: Added loose "location" for the Work Experience block
     { regex: /state|province/i, val: data.state },
     { regex: /country|nation/i, val: data.country },
-    { regex: /linkedin/i, val: data.linkedin },
-    { regex: /title|position|role/i, val: data.jobTitle },
-    { regex: /company|employer/i, val: data.company }
+
+    // 📍 Address (Broad fallback goes LAST)
+    { regex: /address\s*line\s*1|street\s*address|address/i, val: data.street }
   ];
 
   // 2. Grab all visible, interactable inputs
   const inputs = document.querySelectorAll('input:not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]), textarea, select');
 
   inputs.forEach(input => {
-    if (input.disabled || input.readOnly || input.value) return; // Skip if already filled
+    // Fixed: Workday sometimes puts a hidden space " " in empty fields. Trim it to check if it's TRULY empty.
+    if (input.disabled || input.readOnly || (input.value && input.value.trim() !== '')) return;
 
     // 3. Gather Context: Aggressively hunt for detached labels (The Workday Fix)
     let parentText = "";
 
-    // Strategy A: Look for a strictly linked HTML label (Workday loves this)
+    // Strategy A: Look for a strictly linked HTML label
     if (input.id) {
       const linkedLabel = document.querySelector(`label[for="${input.id}"]`);
       if (linkedLabel) parentText += linkedLabel.innerText + " ";
@@ -51,7 +68,6 @@ function fillPage(data) {
     // Strategy B: Look for an ARIA labelledby reference
     const ariaLabelledBy = input.getAttribute('aria-labelledby');
     if (ariaLabelledBy) {
-      // Some sites put multiple IDs in aria-labelledby, so we split them
       ariaLabelledBy.split(' ').forEach(id => {
         const linkedAria = document.getElementById(id);
         if (linkedAria) parentText += linkedAria.innerText + " ";
@@ -71,9 +87,10 @@ function fillPage(data) {
     const nameContext = input.name || "";
     const placeholderContext = input.getAttribute('placeholder') || "";
     const ariaContext = input.getAttribute('aria-label') || "";
+    const autoIdContext = input.getAttribute('data-automation-id') || ""; // Fixed: Workday heavily uses this
 
     // Smash all clues together into one string
-    const fullContext = `${parentText} ${idContext} ${nameContext} ${placeholderContext} ${ariaContext}`.toLowerCase();
+    const fullContext = `${parentText} ${idContext} ${nameContext} ${placeholderContext} ${ariaContext} ${autoIdContext}`.toLowerCase();
 
     // 4. Test against our matchers
     for (const matcher of matchers) {
