@@ -1,13 +1,13 @@
 // All field IDs
 const ALL_FIELDS = [
   'firstName', 'lastName', 'email', 'phone', 'dob', 'linkedin', 'website',
-  'fullName', 'jobTitle', 'experience', 'company', 'currentCTC', 'expectedCTC', 'noticePeriod', 'summary',
+  'fullName', 'jobTitle', 'experience', 'company', 'currentCTC', 'expectedCTC', 'noticePeriod', 'startDate', 'summary', 'skills',
   'street', 'city', 'state', 'zip', 'country', 'workAuth', 'relocate', 'preferredLocation'
 ];
 
 const SECTION_FIELDS = {
   personal: ['firstName', 'lastName', 'email', 'phone', 'dob', 'linkedin', 'website'],
-  professional: ['fullName', 'jobTitle', 'experience', 'company', 'currentCTC', 'expectedCTC', 'noticePeriod', 'summary'],
+  professional: ['fullName', 'jobTitle', 'experience', 'company', 'currentCTC', 'expectedCTC', 'noticePeriod', 'startDate', 'summary', 'skills'],
   address: ['street', 'city', 'state', 'zip', 'country', 'workAuth', 'relocate', 'preferredLocation']
 };
 
