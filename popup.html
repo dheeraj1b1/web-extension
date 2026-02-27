@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>AQA AutoFill Pro</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="popup.css">
+</head>
+
+<body>
+  <div class="header">
+    <div class="header-top">
+      <div class="logo">
+        <div class="logo-icon">⚡</div>
+        <div>
+          <div class="logo-text">AQA AutoFill</div>
+          <div class="logo-sub">Smart Form Filler</div>
+        </div>
+      </div>
+      <div class="status-badge">
+        <div class="status-dot"></div>Active
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="fill">⚡ Fill Now</div>
+    <div class="tab" data-tab="personal">👤 Personal</div>
+    <div class="tab" data-tab="professional">💼 Professional</div>
+    <div class="tab" data-tab="address">📍 Address</div>
+  </div>
+
+  <div class="tab-content active" id="tab-fill">
+    <div class="action-card">
+      <div class="action-title">⚡ Auto-Fill This Page</div>
+      <div class="action-desc">Detects all form fields on the current page and fills them with your saved profile data
+        automatically.</div>
+      <button class="fill-btn" id="btn-fill-now"><span>✦</span> Fill All Fields Now</button>
+    </div>
+    <div class="action-card">
+      <div class="action-title">🎯 Supported Sites</div>
+      <div class="site-chips">
+        <span class="chip">LinkedIn</span><span class="chip">Indeed</span>
+        <span class="chip">Naukri</span><span class="chip">Workday</span>
+        <span class="chip">Google Forms</span><span class="chip">Greenhouse</span>
+        <span class="chip">Lever</span><span class="chip">SmartRecruiters</span>
+        <span class="chip">Any Web Form</span>
+      </div>
+    </div>
+    <div class="action-card" style="margin-bottom:0">
+      <div class="action-title">📋 Quick Stats</div>
+      <div id="profile-status" style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.7;">Loading...
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-personal">
+    <div class="section-label">Basic Info</div>
+    <div class="field-group">
+      <div class="field"><label>First Name</label><input type="text" id="firstName" placeholder="e.g. Arjun"></div>
+      <div class="field"><label>Last Name</label><input type="text" id="lastName" placeholder="e.g. Kumar"></div>
+    </div>
+    <div class="field-group full">
+      <div class="field"><label>Email Address</label><input type="email" id="email" placeholder="your@email.com"></div>
+    </div>
+    <div class="field-group">
+      <div class="field"><label>Phone Number</label><input type="text" id="phone" placeholder="+91 98765 43210"></div>
+      <div class="field"><label>Date of Birth</label><input type="date" id="dob"></div>
+    </div>
+    <div class="section-label">Online Presence</div>
+    <div class="field-group full">
+      <div class="field"><label>LinkedIn Profile URL</label><input type="text" id="linkedin"
+          placeholder="linkedin.com/in/yourname"></div>
+    </div>
+    <div class="field-group full">
+      <div class="field"><label>Portfolio / Website</label><input type="text" id="website"
+          placeholder="yourportfolio.com"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" data-clear="personal">Clear</button>
+      <button class="btn btn-primary" data-save="true">💾 Save</button>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-professional">
+    <div class="section-label">Job Details</div>
+    <div class="field-group full">
+      <div class="field"><label>Full Name</label><input type="text" id="fullName" placeholder="e.g. Dheeraj B"></div>
+    </div>
+    <div class="field-group">
+      <div class="field"><label>Current Job Title</label><input type="text" id="jobTitle"
+          placeholder="e.g. QA Engineer"></div>
+      <div class="field"><label>Years of Experience</label><input type="text" id="experience" placeholder="e.g. 3">
+      </div>
+    </div>
+    <div class="field-group">
+      <div class="field"><label>Current CTC</label><input type="text" id="currentCTC" placeholder="e.g. 4.5 LPA"></div>
+      <div class="field"><label>Expected CTC</label><input type="text" id="expectedCTC" placeholder="e.g. 9-10 LPA">
+      </div>
+    </div>
+    <div class="field-group">
+      <div class="field"><label>Notice Period</label><input type="text" id="noticePeriod" placeholder="e.g. 45-60 Days">
+      </div>
+      <div class="field"><label>Current Company</label><input type="text" id="company"></div>
+    </div>
+    <div class="section-label">Profile Description</div>
+    <div class="field-group full">
+      <div class="field"><label>Professional Summary</label><textarea id="summary"
+          placeholder="QA professional with experience in hybrid automation..."></textarea></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" data-clear="professional">Clear</button>
+      <button class="btn btn-primary" data-save="true">💾 Save</button>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-address">
+    <div class="section-label">Current Address</div>
+    <div class="field-group full">
+      <div class="field"><label>Street Address / Flat No.</label><input type="text" id="street"
+          placeholder="e.g. Flat 12, Rose Apartments, MG Road"></div>
+    </div>
+    <div class="field-group">
+      <div class="field"><label>City</label><input type="text" id="city" placeholder="e.g. Bengaluru"></div>
+      <div class="field"><label>State</label><input type="text" id="state" placeholder="e.g. Karnataka"></div>
+    </div>
+    <div class="field-group">
+      <div class="field"><label>PIN / ZIP Code</label><input type="text" id="zip" placeholder="e.g. 560001"></div>
+      <div class="field"><label>Country</label><input type="text" id="country" placeholder="e.g. India"></div>
+    </div>
+    <div class="section-label">Work Authorization</div>
+    <div class="field-group">
+      <div class="field">
+        <label>Work Authorization</label>
+        <select id="workAuth">
+          <option value="">Select...</option>
+          <option value="Authorized to work">Authorized to work</option>
+          <option value="Citizen">Citizen</option>
+          <option value="Permanent Resident">Permanent Resident</option>
+          <option value="Require Visa Sponsorship">Require Visa Sponsorship</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Willing to Relocate</label>
+        <select id="relocate">
+          <option value="">Select...</option>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+          <option value="Open to discuss">Open to discuss</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-group full">
+      <div class="field"><label>Preferred Work Location(s)</label><input type="text" id="preferredLocation"
+          placeholder="e.g. Bengaluru, Remote, Hyderabad"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" data-clear="address">Clear</button>
+      <button class="btn btn-primary" data-save="true">💾 Save</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="popup.js"></script>
+</body>
+
+</html>
