@@ -308,6 +308,8 @@ if (!window.aqaAutoFillLoaded) {
 
   let activeDropdown = null;
   let currentInput = null;
+  let dismissedInput = null;
+  let reopenButton = null;
 
   const IGNORED_INPUT_TYPES = ['hidden', 'submit', 'button', 'checkbox', 'radio', 'file', 'color'];
   const FIELD_SYNONYMS = {
@@ -432,7 +434,19 @@ if (!window.aqaAutoFillLoaded) {
     }
   }
 
-  function fetchProfileAndShowMenu(input) {
+  function fetchProfileAndShowMenu(input, options = {}) {
+    if (!input || !input.isConnected) return;
+    if (options.forceOpen) {
+      dismissedInput = null;
+      removeReopenButton();
+    } else if (dismissedInput === input) {
+      closeDropdown();
+      showReopenButton(input);
+      return;
+    } else {
+      removeReopenButton();
+    }
+
     currentInput = input;
     const started = safeStorageGetAll((data) => {
       if (!hasValidExtensionContext()) return;
@@ -449,6 +463,7 @@ if (!window.aqaAutoFillLoaded) {
 
       if (!availableData.length) {
         closeDropdown();
+        removeReopenButton();
         return;
       }
 
@@ -536,6 +551,7 @@ if (!window.aqaAutoFillLoaded) {
   function renderDropdown(input, dataList) {
     closeDropdown();
     if (!input || !input.isConnected) return;
+    removeReopenButton();
 
     const div = document.createElement('div');
     div.id = 'aqa-inline-menu';
@@ -556,8 +572,28 @@ if (!window.aqaAutoFillLoaded) {
     `;
 
     const header = document.createElement('div');
-    header.style.cssText = 'font-size:10px;color:#6b6b8a;font-weight:bold;text-transform:uppercase;padding:4px 8px;margin-bottom:4px;border-bottom:1px solid rgba(124,58,237,0.2);letter-spacing:1px;';
-    header.textContent = 'AQA Suggestions';
+    header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:10px;color:#6b6b8a;font-weight:bold;text-transform:uppercase;padding:4px 8px;margin-bottom:4px;border-bottom:1px solid rgba(124,58,237,0.2);letter-spacing:1px;';
+
+    const title = document.createElement('span');
+    title.textContent = 'AQA Suggestions';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.setAttribute('aria-label', 'Close suggestions');
+    closeBtn.style.cssText = 'all:unset;color:#9ca3af;font-size:14px;line-height:1;cursor:pointer;padding:2px 4px;border-radius:4px;';
+    closeBtn.textContent = 'x';
+    closeBtn.addEventListener('mouseenter', () => { closeBtn.style.background = 'rgba(124,58,237,0.15)'; });
+    closeBtn.addEventListener('mouseleave', () => { closeBtn.style.background = 'transparent'; });
+    closeBtn.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dismissedInput = input;
+      closeDropdown();
+      showReopenButton(input);
+    });
+
+    header.appendChild(title);
+    header.appendChild(closeBtn);
     div.appendChild(header);
 
     dataList.forEach(item => {
@@ -602,6 +638,8 @@ if (!window.aqaAutoFillLoaded) {
         targetInput.style.border = '1px solid #10b981';
         targetInput.style.transition = 'all 0.3s';
 
+        dismissedInput = null;
+        removeReopenButton();
         closeDropdown();
       });
       div.appendChild(option);
@@ -637,12 +675,71 @@ if (!window.aqaAutoFillLoaded) {
   }
 
   function repositionDropdown() {
-    if (!activeDropdown || !currentInput) return;
-    if (!currentInput.isConnected) {
-      closeDropdown();
+    if (activeDropdown && currentInput) {
+      if (!currentInput.isConnected) {
+        closeDropdown();
+      } else {
+        positionDropdown(activeDropdown, currentInput);
+      }
+    }
+    positionReopenButton();
+  }
+
+  function showReopenButton(input) {
+    if (!input || !input.isConnected) return;
+    dismissedInput = input;
+    if (!reopenButton) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.id = 'aqa-inline-reopen';
+      btn.style.cssText = `
+        position: fixed;
+        z-index: 2147483647;
+        background: #111827;
+        color: #e5e7eb;
+        border: 1px solid #374151;
+        border-radius: 9999px;
+        padding: 4px 10px;
+        font-size: 11px;
+        font-family: 'DM Sans', sans-serif;
+        cursor: pointer;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+      `;
+      btn.textContent = 'Show AQA';
+      btn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        fetchProfileAndShowMenu(input, { forceOpen: true });
+      });
+      (document.body || document.documentElement).appendChild(btn);
+      reopenButton = btn;
+    }
+    positionReopenButton();
+  }
+
+  function positionReopenButton() {
+    if (!reopenButton || !dismissedInput) return;
+    if (!dismissedInput.isConnected) {
+      dismissedInput = null;
+      removeReopenButton();
       return;
     }
-    positionDropdown(activeDropdown, currentInput);
+    const rect = dismissedInput.getBoundingClientRect();
+    const viewportW = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+    const viewportH = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+    const horizontalPadding = 8;
+    const gap = 6;
+    const top = Math.min(rect.bottom + gap, viewportH - horizontalPadding - 30);
+    const left = Math.max(horizontalPadding, Math.min(rect.right - 80, viewportW - horizontalPadding - 80));
+    reopenButton.style.top = `${top}px`;
+    reopenButton.style.left = `${left}px`;
+  }
+
+  function removeReopenButton() {
+    if (reopenButton) {
+      reopenButton.remove();
+      reopenButton = null;
+    }
   }
 
   function closeDropdown() {
