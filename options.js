@@ -66,7 +66,7 @@ document.getElementById('btn-export').addEventListener('click', () => {
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url; a.download = 'aqa_profiles_backup.json'; a.click();
+        a.href = url; a.download = 'qa_autofill_personal_profiles_backup.json'; a.click();
     });
 });
 

@@ -1,12 +1,12 @@
 // ============================================================
-// AQA AutoFill Pro — Content Script (V3.3)
+// QA AutoFill Pro — Content Script (V3.3)
 // Features: Universal iFrame Engine + Fixed Viewport Suggestions
 // ============================================================
 
 // Prevent crash if extension is re-injected
 if (!window.aqaAutoFillLoaded) {
   window.aqaAutoFillLoaded = true;
-  console.log('AQA AutoFill content script injected');
+  console.log('QA AutoFill Pro content script injected');
   // PART 1: The "Fill All" Engine
   // ────────────────────────────────────────────────────────────
 
@@ -436,6 +436,11 @@ if (!window.aqaAutoFillLoaded) {
 
   function fetchProfileAndShowMenu(input, options = {}) {
     if (!input || !input.isConnected) return;
+    if (isPortalComboboxExpanded(input)) {
+      closeDropdown();
+      removeReopenButton();
+      return;
+    }
     if (options.forceOpen) {
       dismissedInput = null;
       removeReopenButton();
@@ -471,6 +476,49 @@ if (!window.aqaAutoFillLoaded) {
       renderDropdown(input, ranked);
     });
     if (!started) closeDropdown();
+  }
+
+  function isPortalComboboxExpanded(input) {
+    if (!input) return false;
+    const container = input.closest('[role="combobox"], [aria-haspopup], [aria-controls], [aria-owns]');
+    const nodes = [input, container].filter(Boolean);
+
+    if (nodes.some(node => node.getAttribute && node.getAttribute('aria-expanded') === 'true')) return true;
+    if (nodes.some(node => hasVisibleControlledPopup(node))) return true;
+
+    const hasComboboxRole = nodes.some(node => node.getAttribute && node.getAttribute('role') === 'combobox');
+    const hasPopupHint = nodes.some(node => {
+      if (!node.getAttribute) return false;
+      const value = (node.getAttribute('aria-haspopup') || '').toLowerCase();
+      return !!value && value !== 'false';
+    });
+
+    const hasVisiblePopupLayer = Array.from(document.querySelectorAll('[role="listbox"], [role="menu"], [role="tree"], [role="dialog"]'))
+      .some(el => isElementVisible(el));
+
+    if ((hasComboboxRole || hasPopupHint) && hasVisiblePopupLayer) return true;
+
+    const datalistId = input.getAttribute('list');
+    if (datalistId && document.getElementById(datalistId)) return true;
+
+    return false;
+  }
+
+  function hasVisibleControlledPopup(node) {
+    if (!node || !node.getAttribute) return false;
+    const ids = `${node.getAttribute('aria-controls') || ''} ${node.getAttribute('aria-owns') || ''}`
+      .split(/\s+/)
+      .map(id => id.trim())
+      .filter(Boolean);
+    return ids.some(id => isElementVisible(document.getElementById(id)));
+  }
+
+  function isElementVisible(el) {
+    if (!el) return false;
+    const style = window.getComputedStyle(el);
+    if (style.display === 'none' || style.visibility === 'hidden') return false;
+    if (style.opacity === '0') return false;
+    return el.getClientRects().length > 0;
   }
 
   function resolveActiveProfileData(data) {
@@ -570,12 +618,15 @@ if (!window.aqaAutoFillLoaded) {
         font-family: 'DM Sans', sans-serif;
         padding: 6px;
     `;
+    div.addEventListener('pointerdown', (e) => { e.stopPropagation(); });
+    div.addEventListener('mousedown', (e) => { e.stopPropagation(); });
+    div.addEventListener('click', (e) => { e.stopPropagation(); });
 
     const header = document.createElement('div');
     header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:10px;color:#6b6b8a;font-weight:bold;text-transform:uppercase;padding:4px 8px;margin-bottom:4px;border-bottom:1px solid rgba(124,58,237,0.2);letter-spacing:1px;';
 
     const title = document.createElement('span');
-    title.textContent = 'AQA Suggestions';
+    title.textContent = 'QA Suggestions';
 
     const closeBtn = document.createElement('button');
     closeBtn.type = 'button';
@@ -584,12 +635,16 @@ if (!window.aqaAutoFillLoaded) {
     closeBtn.textContent = 'x';
     closeBtn.addEventListener('mouseenter', () => { closeBtn.style.background = 'rgba(124,58,237,0.15)'; });
     closeBtn.addEventListener('mouseleave', () => { closeBtn.style.background = 'transparent'; });
-    closeBtn.addEventListener('mousedown', (e) => {
+    closeBtn.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       e.stopPropagation();
       dismissedInput = input;
       closeDropdown();
       showReopenButton(input);
+    });
+    closeBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
     });
 
     header.appendChild(title);
@@ -618,7 +673,7 @@ if (!window.aqaAutoFillLoaded) {
       option.appendChild(valueEl);
       option.appendChild(labelEl);
 
-      option.addEventListener('mousedown', (e) => {
+      option.addEventListener('pointerdown', (e) => {
         e.preventDefault();
         e.stopPropagation();
 
@@ -705,12 +760,17 @@ if (!window.aqaAutoFillLoaded) {
         cursor: pointer;
         box-shadow: 0 6px 20px rgba(0,0,0,0.35);
       `;
-      btn.textContent = 'Show AQA';
-      btn.addEventListener('mousedown', (e) => {
+      btn.textContent = 'Show QA';
+      btn.addEventListener('pointerdown', (e) => {
         e.preventDefault();
         e.stopPropagation();
         fetchProfileAndShowMenu(input, { forceOpen: true });
       });
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+      btn.addEventListener('mousedown', (e) => { e.stopPropagation(); });
       (document.body || document.documentElement).appendChild(btn);
       reopenButton = btn;
     }
@@ -750,3 +810,6 @@ if (!window.aqaAutoFillLoaded) {
     currentInput = null;
   }
 }
+
+
+
